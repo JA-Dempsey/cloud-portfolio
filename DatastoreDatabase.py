@@ -88,7 +88,7 @@ class DatastoreDatabase():
 
         return output
 
-    def _convert_list(self, entities: list):
+    def _convert_list(self, entities):
         """Give a list of entities, converts each individual entity
         to a dict and returns a list of dicts.
 
