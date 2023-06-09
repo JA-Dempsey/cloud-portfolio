@@ -3,8 +3,9 @@ from google.cloud import datastore
 
 class DatastoreDatabase():
 
-    def __init__(self):
+    def __init__(self, url=None):
         self.client = datastore.Client()
+        self._url = url
 
     def get(self, type, id=None, filters=None):
 
@@ -50,7 +51,7 @@ class DatastoreDatabase():
         # Return the entity created in dict format
         return self._convert_single(entity)
 
-    def update_single(self, type, data):
+    def update_single(self, type, id, data):
         """Method that updates an entity given the new data,
         and the id of the entity to change."""
         entity = self.get(type, id)
