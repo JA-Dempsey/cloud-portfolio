@@ -17,9 +17,9 @@ class DatastoreDatabase():
             entity = self.client.get(qkey)
             output = self._convert_single(entity)
             return output
-        else:
-            # Remainder of options use this query def
-            query = self.client.query(kind=type)
+
+        # Remainder of options use this query def
+        query = self.client.query(kind=type)
 
         # List of entities, no filters
         if not filters:
@@ -27,7 +27,10 @@ class DatastoreDatabase():
 
         # Filter request
         else:
-            pass
+            for filter in filters:
+                query.add_filter(filter)
+
+            entity_list = list(query.fetch())
 
         if entity_list:
             output = self._convert_list(entity_list)
