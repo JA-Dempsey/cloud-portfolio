@@ -327,8 +327,8 @@ def verify_attr(data, req_attr):
 @app.route('/decode', methods=['GET'])
 def decode_jwt():
     payload = verify_jwt(request)
-    return payload          
-        
+    return payload
+
 
 # Generate a JWT from the Auth0 domain and return it
 # Request: JSON body with 2 properties with "username" and "password"
