@@ -273,6 +273,11 @@ def libraries_id(library_id):
         pass
 
     if request.method == 'DELETE':
+        entity = database.get('Libraries', int(library_id))
+        book_list = entity['books']
+        for book in book_list:
+            print(book)
+
         outcome = database.delete_single('Libraries', int(library_id))
 
         if not outcome:
@@ -406,6 +411,8 @@ def books_id(book_id):
             return make_response("No Content", 204)
 
     if request.method == 'DELETE':
+        entity = database.get('Books', int(book_id))
+
         outcome = database.delete_single('Books', int(book_id))
 
         if not outcome:
