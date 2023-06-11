@@ -160,10 +160,29 @@ def libraries():
 
     req_attr = ['name', 'description', 'categories', 'owner', 'public']
 
+    # Verify request for token/authorization
+    payload = verify_jwt(request, False)
+    is_user = payload['valid']
+
     if request.method == 'POST':
+
+        # Data from client must be 'application/json'
+        is_json = verify_app_json(request)
+        if not is_json:
+            return make_response(api_errors['406'], 406)
+
+        # Error if user is not a valid user/token
+        if not is_user:
+            return make_response(api_errors['403'], 403)
+
+        # Get client data and append books info
         data = request.get_json()
         data['books'] = []
         is_valid = verify_attr(data, req_attr)
+
+        # If valid user, add owner info
+        if is_user:
+            data['owner'] = payload['sub']
 
         if len(data) != len(req_attr):
             return make_response(api_errors['400'], 400)
@@ -187,12 +206,19 @@ def libraries():
             results = database.get('Libraries', None, filters)
 
 
-@app.route('/libraries/<library_id>', methods=['PUT', 'PATCH', 'DELETE'])
+@app.route('/libraries/<library_id>', methods=['PUT', 'PATCH',
+                                               'DELETE', 'GET'])
 def libraries_id(library_id):
 
     req_attr = ['name', 'description', 'categories', 'owner', 'public']
 
     if request.method == 'PUT':
+
+        # Data from client must be 'application/json'
+        is_json = verify_app_json(request)
+        if not is_json:
+            return make_response(api_errors['406'], 406)
+
         data = request.get_json()
         is_valid = verify_attr(data, req_attr)
 
@@ -209,6 +235,12 @@ def libraries_id(library_id):
             return make_response("No Content", 204)
 
     if request.method == 'PATCH':
+
+        # Data from client must be 'application/json'
+        is_json = verify_app_json(request)
+        if not is_json:
+            return make_response(api_errors['406'], 406)
+
         data = request.get_json()
         is_valid = verify_attr(data, req_attr)
 
@@ -221,6 +253,9 @@ def libraries_id(library_id):
         else:
             return make_response("No Cotent", 204)
 
+    if request.method == 'GET':
+        pass
+
     if request.method == 'DELETE':
         outcome = database.delete_single('Libraries', int(library_id))
 
@@ -230,7 +265,7 @@ def libraries_id(library_id):
             return make_response("No Content", 204)
 
 
-@app.route('libraries/<library_id>/<book_id>', methods=['PUT', 'DELETE'])
+@app.route('/libraries/<library_id>/<book_id>', methods=['PUT', 'DELETE'])
 def libraries_rel():
     if request.method == 'PUT':
         pass
@@ -245,6 +280,12 @@ def books():
     req_attr = ['name', 'author', 'isbn', 'public', 'owner']
 
     if request.method == 'POST':
+
+        # Data from client must be 'application/json'
+        is_json = verify_app_json(request)
+        if not is_json:
+            return make_response(api_errors['406'], 406)
+
         data = request.get_json()
         data['library'] = None  # No default library
         is_valid = verify_attr(data, req_attr)
@@ -279,6 +320,12 @@ def books_id(book_id):
     req_attr = ['name', 'author', 'isbn', 'owner']
 
     if request.method == 'PUT':
+
+        # Data from client must be 'application/json'
+        is_json = verify_app_json(request)
+        if not is_json:
+            return make_response(api_errors['406'], 406)
+
         data = request.get_json()
         is_valid = verify_attr(data, req_attr)
 
@@ -294,6 +341,12 @@ def books_id(book_id):
             return make_response("No Content", 204)
 
     if request.method == 'PATCH':
+
+        # Data from client must be 'application/json'
+        is_json = verify_app_json(request)
+        if not is_json:
+            return make_response(api_errors['406'], 406)
+
         data = request.get_json()
         is_valid = verify_attr(data, req_attr)
 
@@ -323,6 +376,13 @@ def verify_attr(data, req_attr):
     return True
 
 
+def verify_app_json(request):
+    if 'application/json' in request.accept_mimetypes:
+        return True
+    else:
+        return False
+
+
 # Decode the JWT supplied in the Authorization header
 @app.route('/decode', methods=['GET'])
 def decode_jwt():
@@ -350,6 +410,8 @@ def login_user():
     url = 'https://' + DOMAIN + '/oauth/token'
     r = requests.post(url, json=body, headers=headers)
     return r.text, 200, {'Content-Type': 'application/json'}
+
+
 
 
 if __name__ == '__main__':
