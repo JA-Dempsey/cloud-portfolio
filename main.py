@@ -359,7 +359,7 @@ def libraries_rel(library_id, book_id):
             return make_response(api_errors['403'], 403)
 
         library = database._get_entity('Libraries', int(library_id))
-        
+
         # Clear individual books from the library
         book_list = library['books']
         new_books = []
