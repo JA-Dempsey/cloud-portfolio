@@ -169,6 +169,8 @@ def libraries():
         # Verify token/authorization for requests
         payload = verify_jwt(request, False)
         is_user = payload['valid']
+    else:
+        is_user = False
 
     if request.method == 'POST':
 
@@ -370,6 +372,8 @@ def books():
         # Verify token/authorization for requests
         payload = verify_jwt(request, False)
         is_user = payload['valid']
+    else:
+        is_user = False
 
     if request.method == 'POST':
 
