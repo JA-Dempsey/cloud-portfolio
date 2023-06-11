@@ -160,7 +160,7 @@ def libraries():
 
     req_attr = ['name', 'description', 'categories', 'owner', 'public']
 
-    # Verify request for token/authorization
+    # Verify token/authorization for requests
     payload = verify_jwt(request, False)
     is_user = payload['valid']
 
@@ -194,16 +194,20 @@ def libraries():
             database.create_single('Libraries', data)
 
     if request.method == 'GET':
+        # User authorization is not required
+        # No authorization = public only libraries
+        # Authorization = includes private libraries
+        # for that user
         if 'Authorization' not in request.headers:
             filters = [('public', '=', True)]
             results = database.get('Libraries', None, filters)
-
-            return make_response(results, 200)
-
         else:
-            payload = verify_jwt(request)
             filters = [('owner', '=', payload['sub'])]
             results = database.get('Libraries', None, filters)
+
+        # Results will always send the same 200 response
+        # With lists of json entities
+        return make_response(results, 200)
 
 
 @app.route('/libraries/<library_id>', methods=['PUT', 'PATCH',
@@ -212,12 +216,20 @@ def libraries_id(library_id):
 
     req_attr = ['name', 'description', 'categories', 'owner', 'public']
 
+    # Verify token/authorization for requests
+    payload = verify_jwt(request, False)
+    is_user = payload['valid']
+
     if request.method == 'PUT':
 
         # Data from client must be 'application/json'
         is_json = verify_app_json(request)
         if not is_json:
             return make_response(api_errors['406'], 406)
+
+        # Error if user is not a valid user/token
+        if not is_user:
+            return make_response(api_errors['403'], 403)
 
         data = request.get_json()
         is_valid = verify_attr(data, req_attr)
@@ -240,6 +252,10 @@ def libraries_id(library_id):
         is_json = verify_app_json(request)
         if not is_json:
             return make_response(api_errors['406'], 406)
+
+        # Error if user is not a valid user/token
+        if not is_user:
+            return make_response(api_errors['403'], 403)
 
         data = request.get_json()
         is_valid = verify_attr(data, req_attr)
@@ -267,11 +283,22 @@ def libraries_id(library_id):
 
 @app.route('/libraries/<library_id>/<book_id>', methods=['PUT', 'DELETE'])
 def libraries_rel():
+
+    # Verify token/authorization for requests
+    payload = verify_jwt(request, False)
+    is_user = payload['valid']
+
     if request.method == 'PUT':
-        pass
+
+        # Error if user is not a valid user/token
+        if not is_user:
+            return make_response(api_errors['403'], 403)
 
     if request.method == 'DELETE':
-        pass
+
+        # Error if user is not a valid user/token
+        if not is_user:
+            return make_response(api_errors['403'], 403)
 
 
 @app.route('/books', methods=['POST', 'GET'])
@@ -279,12 +306,20 @@ def books():
 
     req_attr = ['name', 'author', 'isbn', 'public', 'owner']
 
+    # Verify token/authorization for requests
+    payload = verify_jwt(request, False)
+    is_user = payload['valid']
+
     if request.method == 'POST':
 
         # Data from client must be 'application/json'
         is_json = verify_app_json(request)
         if not is_json:
             return make_response(api_errors['406'], 406)
+
+        # Error if user is not a valid user/token
+        if not is_user:
+            return make_response(api_errors['403'], 403)
 
         data = request.get_json()
         data['library'] = None  # No default library
@@ -319,12 +354,20 @@ def books_id(book_id):
 
     req_attr = ['name', 'author', 'isbn', 'owner']
 
+    # Verify token/authorization for requests
+    payload = verify_jwt(request, False)
+    is_user = payload['valid']
+
     if request.method == 'PUT':
 
         # Data from client must be 'application/json'
         is_json = verify_app_json(request)
         if not is_json:
             return make_response(api_errors['406'], 406)
+
+        # Error if user is not a valid user/token
+        if not is_user:
+            return make_response(api_errors['403'], 403)
 
         data = request.get_json()
         is_valid = verify_attr(data, req_attr)
@@ -346,6 +389,10 @@ def books_id(book_id):
         is_json = verify_app_json(request)
         if not is_json:
             return make_response(api_errors['406'], 406)
+
+        # Error if user is not a valid user/token
+        if not is_user:
+            return make_response(api_errors['403'], 403)
 
         data = request.get_json()
         is_valid = verify_attr(data, req_attr)
@@ -410,8 +457,6 @@ def login_user():
     url = 'https://' + DOMAIN + '/oauth/token'
     r = requests.post(url, json=body, headers=headers)
     return r.text, 200, {'Content-Type': 'application/json'}
-
-
 
 
 if __name__ == '__main__':
