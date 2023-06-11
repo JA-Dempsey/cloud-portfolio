@@ -365,7 +365,7 @@ def books():
 @app.route('/books/<book_id>', methods=['PUT', 'PATCH', 'DELETE'])
 def books_id(book_id):
 
-    req_attr = ['name', 'author', 'isbn', 'owner']
+    req_attr = ['name', 'author', 'isbn', 'public']
 
     # Verify token/authorization for requests
     payload = verify_jwt(request, False)
