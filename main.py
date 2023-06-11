@@ -143,7 +143,7 @@ def verify_jwt(request, auto_return=True):
 
 api_errors = {
     '400': {'Error': 'The request object is missing'
-            'at least one of the required attributes'},
+            ' at least one of the required attributes'},
     '403': {'Forbidden'},
     '404': {'Not Found'},
     '405': {'Method not allowed'},
@@ -158,18 +158,19 @@ database = DatastoreDatabase(url)
 @app.route('/libraries', methods=['POST', 'GET'])
 def libraries():
 
-    req_attr = ['name', 'description', 'categories', 'owner', 'public']
+    req_attr = ['name', 'description', 'categories', 'public', 'owner', 'books']
 
-    # Verify token/authorization for requests
-    payload = verify_jwt(request, False)
-    is_user = payload['valid']
+    if 'Authorization' in request.headers:
+        # Verify token/authorization for requests
+        payload = verify_jwt(request, False)
+        is_user = payload['valid']
 
     if request.method == 'POST':
 
         # Data from client must be 'application/json'
         is_json = verify_app_json(request)
         if not is_json:
-            return make_response(api_errors['406'], 406)
+            return make_response(api_errors['415'], 415)
 
         # Error if user is not a valid user/token
         if not is_user:
@@ -191,7 +192,8 @@ def libraries():
             pass
 
         if len(data) == len(req_attr) and is_valid:
-            database.create_single('Libraries', data)
+            entity = database.create_single('Libraries', data)
+            return entity
 
     if request.method == 'GET':
         # User authorization is not required
@@ -225,7 +227,7 @@ def libraries_id(library_id):
         # Data from client must be 'application/json'
         is_json = verify_app_json(request)
         if not is_json:
-            return make_response(api_errors['406'], 406)
+            return make_response(api_errors['415'], 415)
 
         # Error if user is not a valid user/token
         if not is_user:
@@ -451,6 +453,7 @@ def decode_jwt():
 @app.route('/login', methods=['POST'])
 def login_user():
     content = request.get_json()
+    print(content)
     username = content["username"]
     password = content["password"]
     body = {'grant_type': 'password',
