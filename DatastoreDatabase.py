@@ -28,7 +28,8 @@ class DatastoreDatabase():
         # Filter request
         else:
             for filter in filters:
-                query.add_filter(filter)
+                attr, op, val = filter
+                query.add_filter(attr, op, val)
 
             entity_list = list(query.fetch())
 
