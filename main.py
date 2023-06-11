@@ -162,7 +162,8 @@ database = DatastoreDatabase(url, endpoints)
 @app.route('/libraries', methods=['POST', 'GET'])
 def libraries():
 
-    req_attr = ['name', 'description', 'categories', 'public', 'owner', 'books']
+    req_attr = ['name', 'description', 'categories',
+                'public', 'owner', 'books']
 
     if 'Authorization' in request.headers:
         # Verify token/authorization for requests
@@ -296,6 +297,9 @@ def libraries_id(library_id):
         for book in book_list:
             print(book)
 
+        if not is_user:
+            return make_response(api_errors['403'], 403)
+
         outcome = database.delete_single('Libraries', int(library_id))
 
         if not outcome:
@@ -305,12 +309,14 @@ def libraries_id(library_id):
 
 
 @app.route('/libraries/<library_id>/<book_id>', methods=['PUT', 'DELETE'])
-def libraries_rel():
+def libraries_rel(library_id, book_id):
 
     if 'Authorization' in request.headers:
         # Verify token/authorization for requests
         payload = verify_jwt(request, False)
         is_user = payload['valid']
+    else:
+        is_user = False
 
     if request.method == 'PUT':
 
@@ -318,11 +324,41 @@ def libraries_rel():
         if not is_user:
             return make_response(api_errors['403'], 403)
 
+        library = database._get_entity('Libraries', int(library_id))
+        if not library:
+            return make_response(api_errors['404'], 404)
+
+        book = database._get_entity('Books', int(book_id))
+        if not book:
+            return make_response(api_errors['404'], 404)
+
+        book_list = library['books']
+        book_list.append(book)
+        library['books'] = book_list
+
+        database.client.put(library)
+
+        return "No Content", 204
+
     if request.method == 'DELETE':
 
         # Error if user is not a valid user/token
         if not is_user:
             return make_response(api_errors['403'], 403)
+
+        library = database._get_entity('Libraries', int(library_id))
+
+        book_list = library['books']
+        new_books = []
+        for book in book_list:
+            if book.key.id != int(book_id):
+                new_books.append(book)
+
+        library['books'] = new_books
+
+        database.client.put(library)
+
+        return "No Content", 204
 
 
 @app.route('/books', methods=['POST', 'GET'])
@@ -373,14 +409,18 @@ def books():
 
         return make_response(results, 200)
 
-@app.route('/books/<book_id>', methods=['PUT', 'PATCH', 'DELETE'])
+
+@app.route('/books/<book_id>', methods=['PUT', 'PATCH', 'DELETE', 'GET'])
 def books_id(book_id):
 
     req_attr = ['name', 'author', 'isbn', 'public']
 
-    # Verify token/authorization for requests
-    payload = verify_jwt(request, False)
-    is_user = payload['valid']
+    if 'Authorization' in request.headers:
+        # Verify token/authorization for requests
+        payload = verify_jwt(request, False)
+        is_user = payload['valid']
+    else:
+        is_user = False
 
     if request.method == 'PUT':
 
@@ -429,8 +469,21 @@ def books_id(book_id):
         else:
             return make_response("No Content", 204)
 
+    if request.method == 'GET':
+
+        if not is_user:
+            return make_response(api_errors['403'], 403)
+
+        results = database.get('Books', int(book_id))
+        if not results:
+            return make_response(api_errors['404'], 404)
+
+        return make_response(results, 200)
+
     if request.method == 'DELETE':
-        entity = database.get('Books', int(book_id))
+
+        if not is_user:
+            return make_response(api_errors['403'], 403)
 
         outcome = database.delete_single('Books', int(book_id))
 
