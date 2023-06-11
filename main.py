@@ -144,11 +144,11 @@ def verify_jwt(request, auto_return=True):
 api_errors = {
     '400': {'Error': 'The request object is missing'
             ' at least one of the required attributes'},
-    '403': {'Forbidden'},
-    '404': {'Not Found'},
-    '405': {'Method not allowed'},
-    '406': {'Not acceptable'},
-    '415': {'Unsupported Media Type'},
+    '403': {'Error': 'Forbidden'},
+    '404': {'Error': 'Not Found'},
+    '405': {'Error': 'Method not allowed'},
+    '406': {'Error': 'Not acceptable'},
+    '415': {'Error': 'Unsupported Media Type'},
 }
 
 url = 'https://127.0.0.1'
@@ -226,6 +226,8 @@ def libraries_id(library_id):
         # Verify token/authorization for requests
         payload = verify_jwt(request, False)
         is_user = payload['valid']
+    else:
+        is_user = False
 
     if request.method == 'PUT':
 
@@ -277,7 +279,16 @@ def libraries_id(library_id):
             return make_response("No Content", 204)
 
     if request.method == 'GET':
-        pass
+
+        if not is_user:
+            return make_response(api_errors['403'], 403)
+
+        results = database.get('Libraries', int(library_id))
+
+        if not results:
+            return make_response(api_errors['404'], 404)
+
+        return make_response(results, 200)
 
     if request.method == 'DELETE':
         entity = database.get('Libraries', int(library_id))
