@@ -360,8 +360,7 @@ def libraries_rel(library_id, book_id):
 
         library = database._get_entity('Libraries', int(library_id))
         
-        # Clear individual books of the library
-        # Reference
+        # Clear individual books from the library
         book_list = library['books']
         new_books = []
         for book in book_list:
@@ -500,6 +499,27 @@ def books_id(book_id):
 
         if not is_user:
             return make_response(api_errors['403'], 403)
+
+        # Get book and get library_id
+        book = database._get_entity('Books', int(book_id))
+        if book:
+            library_id = int(book['library'])
+
+        # If library_id is found, check it for the book
+        # entity
+        if library_id:
+            library = database._get_entity('Libraries', int(library_id))
+
+            # Clear target book from the library
+            book_list = library['books']
+            new_books = []
+            for book in book_list:
+                if book.key.id != int(book_id):
+                    new_books.append(book)
+
+            # Update the library entity
+            library['books'] = new_books
+            database.client.put(library)
 
         outcome = database.delete_single('Books', int(book_id))
 
