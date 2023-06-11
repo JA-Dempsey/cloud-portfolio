@@ -151,8 +151,12 @@ api_errors = {
     '415': {'Unsupported Media Type'},
 }
 
-url = '127.0.0.1'
-database = DatastoreDatabase(url)
+url = 'https://127.0.0.1'
+endpoints = {
+    'Books': '/books',
+    'Libraries': '/libraries'
+}
+database = DatastoreDatabase(url, endpoints)
 
 
 @app.route('/libraries', methods=['POST', 'GET'])
@@ -170,7 +174,7 @@ def libraries():
         # Data from client must be 'application/json'
         is_json = verify_app_json(request)
         if not is_json:
-            return make_response(api_errors['415'], 415)
+            return make_response(api_errors['406'], 406)
 
         # Error if user is not a valid user/token
         if not is_user:
@@ -216,18 +220,19 @@ def libraries():
                                                'DELETE', 'GET'])
 def libraries_id(library_id):
 
-    req_attr = ['name', 'description', 'categories', 'owner', 'public']
+    req_attr = ['name', 'description', 'categories', 'public']
 
-    # Verify token/authorization for requests
-    payload = verify_jwt(request, False)
-    is_user = payload['valid']
+    if 'Authorization' in request.headers:
+        # Verify token/authorization for requests
+        payload = verify_jwt(request, False)
+        is_user = payload['valid']
 
     if request.method == 'PUT':
 
         # Data from client must be 'application/json'
         is_json = verify_app_json(request)
         if not is_json:
-            return make_response(api_errors['415'], 415)
+            return make_response(api_errors['406'], 406)
 
         # Error if user is not a valid user/token
         if not is_user:
@@ -269,7 +274,7 @@ def libraries_id(library_id):
         if not outcome:
             return make_response(api_errors['404'], 404)
         else:
-            return make_response("No Cotent", 204)
+            return make_response("No Content", 204)
 
     if request.method == 'GET':
         pass
@@ -291,9 +296,10 @@ def libraries_id(library_id):
 @app.route('/libraries/<library_id>/<book_id>', methods=['PUT', 'DELETE'])
 def libraries_rel():
 
-    # Verify token/authorization for requests
-    payload = verify_jwt(request, False)
-    is_user = payload['valid']
+    if 'Authorization' in request.headers:
+        # Verify token/authorization for requests
+        payload = verify_jwt(request, False)
+        is_user = payload['valid']
 
     if request.method == 'PUT':
 
@@ -311,11 +317,12 @@ def libraries_rel():
 @app.route('/books', methods=['POST', 'GET'])
 def books():
 
-    req_attr = ['name', 'author', 'isbn', 'public', 'owner']
+    req_attr = ['name', 'author', 'isbn', 'public', 'owner', 'library']
 
-    # Verify token/authorization for requests
-    payload = verify_jwt(request, False)
-    is_user = payload['valid']
+    if 'Authorization' in request.headers:
+        # Verify token/authorization for requests
+        payload = verify_jwt(request, False)
+        is_user = payload['valid']
 
     if request.method == 'POST':
 
@@ -330,6 +337,7 @@ def books():
 
         data = request.get_json()
         data['library'] = None  # No default library
+        data['owner'] = payload['sub']
         is_valid = verify_attr(data, req_attr)
 
         if len(data) != len(req_attr):
@@ -339,22 +347,20 @@ def books():
             pass
 
         if len(data) == len(req_attr) and is_valid:
-            database.create_single('Books', data)
+            entity = database.create_single('Books', data)
+            return entity
 
     if request.method == 'GET':
         # Not authorized, only public returned
         if 'Authorization' not in request.headers:
             filters = [('public', '=', True)]
             results = database.get('Books', None, filters)
-
-            return make_response(results, 200)
-
         # Authorized, return only users books
         else:
-            payload = verify_jwt(request)
             filters = [('owner', '=', payload['sub'])]
             results = database.get('Books', None, filters)
 
+        return make_response(results, 200)
 
 @app.route('/books/<book_id>', methods=['PUT', 'PATCH', 'DELETE'])
 def books_id(book_id):
