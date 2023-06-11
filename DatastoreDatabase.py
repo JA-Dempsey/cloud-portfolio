@@ -103,7 +103,6 @@ class DatastoreDatabase():
         return output
 
     def _add_self_link(self, type, entity_dict):
-        print(entity_dict)
         url_endpt = f'{self._url}{self._endpoints[type]}'
         entity_dict["self"] = url_endpt + f'/{str(entity_dict["id"])}'
         return entity_dict
