@@ -1,5 +1,5 @@
 from flask import Flask, request, make_response, redirect
-from flask import _request_ctx_stack, jsonify, render_template
+from flask import jsonify, render_template
 from flask import session, url_for
 from DatastoreDatabase import DatastoreDatabase
 import requests
@@ -354,7 +354,7 @@ def books():
             results = database.get('Books', None, filters)
 
 
-@app.route('/books/<book_id>', method=['PUT', 'PATCH', 'DELETE'])
+@app.route('/books/<book_id>', methods=['PUT', 'PATCH', 'DELETE'])
 def books_id(book_id):
 
     req_attr = ['name', 'author', 'isbn', 'owner']
