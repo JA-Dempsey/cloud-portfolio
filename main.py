@@ -294,14 +294,19 @@ def libraries_id(library_id):
         return make_response(results, 200)
 
     if request.method == 'DELETE':
+
         entity = database.get('Libraries', int(library_id))
+
+        # Clear books of the library
         book_list = entity['books']
         for book in book_list:
-            print(book)
+            book['library'] = None
+            database.client.put(book)
 
         if not is_user:
             return make_response(api_errors['403'], 403)
 
+        # Delete library
         outcome = database.delete_single('Libraries', int(library_id))
 
         if not outcome:
@@ -334,11 +339,16 @@ def libraries_rel(library_id, book_id):
         if not book:
             return make_response(api_errors['404'], 404)
 
+        # Change library and put
         book_list = library['books']
         book_list.append(book)
         library['books'] = book_list
 
         database.client.put(library)
+
+        # Change and put book
+        book['library'] = library.key.id
+        database.client.put(book)
 
         return "No Content", 204
 
@@ -349,7 +359,9 @@ def libraries_rel(library_id, book_id):
             return make_response(api_errors['403'], 403)
 
         library = database._get_entity('Libraries', int(library_id))
-
+        
+        # Clear individual books of the library
+        # Reference
         book_list = library['books']
         new_books = []
         for book in book_list:
