@@ -203,6 +203,12 @@ def libraries():
             return make_response(entity, 201)
 
     if request.method == 'GET':
+
+        # Data from client must be 'application/json'
+        is_json = verify_app_json(request)
+        if not is_json:
+            return make_response(api_errors['406'], 406)
+
         # User authorization is not required
         # No authorization = public only libraries
         # Authorization = includes private libraries
@@ -413,6 +419,12 @@ def books():
             return make_response(entity, 201)
 
     if request.method == 'GET':
+
+        # Data from client must be 'application/json'
+        is_json = verify_app_json(request)
+        if not is_json:
+            return make_response(api_errors['406'], 406)
+
         # Not authorized, only public returned
         if 'Authorization' not in request.headers:
             filters = [('public', '=', True)]
