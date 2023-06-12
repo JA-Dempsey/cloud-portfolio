@@ -252,7 +252,7 @@ def libraries_id(library_id):
         data = request.get_json()
         is_valid = verify_attr(data, req_attr)
 
-        if len(data) != len(req_attr):
+        if len(data) != len(req_attr) or not is_valid:
             return make_response(api_errors['400'], 400)
 
         if is_valid:
@@ -278,7 +278,9 @@ def libraries_id(library_id):
         data = request.get_json()
         is_valid = verify_attr(data, req_attr)
 
-        if is_valid:
+        if not is_valid:
+            return make_response(api_errors['400'], 400)
+        else:
             outcome = database.update_single('Libraries',
                                              int(library_id), data)
 
@@ -408,7 +410,7 @@ def books():
         data['owner'] = payload['sub']
         is_valid = verify_attr(data, req_attr)
 
-        if len(data) != len(req_attr):
+        if len(data) != len(req_attr) or not is_valid:
             return make_response(api_errors['400'], 400)
 
         if not is_valid:
@@ -463,7 +465,7 @@ def books_id(book_id):
         data = request.get_json()
         is_valid = verify_attr(data, req_attr)
 
-        if len(data) != len(req_attr):
+        if len(data) != len(req_attr) or not is_valid:
             return make_response(api_errors['400'], 400)
 
         if is_valid:
@@ -488,7 +490,9 @@ def books_id(book_id):
         data = request.get_json()
         is_valid = verify_attr(data, req_attr)
 
-        if is_valid:
+        if not is_valid:
+            return make_response(api_errors['400'], 400)
+        else:
             outcome = database.update_single('Books', int(book_id), data)
 
         if not outcome:
