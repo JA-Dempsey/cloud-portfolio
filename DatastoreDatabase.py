@@ -62,10 +62,14 @@ class DatastoreDatabase():
         # Return the entity created in dict format
         return output
 
-    def update_single(self, type, id, data):
+    def update_single(self, type, id, data, owner=None):
         """Method that updates an entity given the new data,
         and the id of the entity to change."""
         entity = self._get_entity(type, id)
+
+        if owner and entity:
+            if entity['owner'] != owner:
+                return "403"
 
         if entity:
             for key in data.keys():
@@ -76,10 +80,18 @@ class DatastoreDatabase():
         else:
             return None  # No entity found with given type, id
 
-    def delete_single(self, type, id):
+    def delete_single(self, type, id, owner=None):
         """Method that deletes a single entity give the type
         and id that exists in the database."""
         entity = self._get_entity(type, id)
+
+        if owner and entity:
+            if entity['owner'] != owner:
+                return "403"
+
+        if not entity:
+            return None
+
         output = self._convert_single(entity)
 
         if entity:

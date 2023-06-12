@@ -257,10 +257,13 @@ def libraries_id(library_id):
 
         if is_valid:
             outcome = database.update_single('Libraries',
-                                             int(library_id), data)
+                                             int(library_id),
+                                             data, payload['sub'])
 
         if not outcome:
             return make_response(api_errors['404'], 404)
+        elif outcome == "403":
+            make_response(api_errors['403'], 403)
         else:
             return make_response(outcome, 200)
 
@@ -282,10 +285,13 @@ def libraries_id(library_id):
             return make_response(api_errors['400'], 400)
         else:
             outcome = database.update_single('Libraries',
-                                             int(library_id), data)
+                                             int(library_id),
+                                             data, payload['sub'])
 
         if not outcome:
             return make_response(api_errors['404'], 404)
+        elif outcome == "403":
+            make_response(api_errors['403'], 403)
         else:
             return make_response(outcome, 200)
 
@@ -315,10 +321,13 @@ def libraries_id(library_id):
             return make_response(api_errors['403'], 403)
 
         # Delete library
-        outcome = database.delete_single('Libraries', int(library_id))
+        outcome = database.delete_single('Libraries', int(library_id),
+                                         payload['sub'])
 
         if not outcome:
             return make_response(api_errors['404'], 404)
+        elif outcome == "403":
+            make_response(api_errors['403'], 403)
         else:
             return make_response("No Content", 204)
 
@@ -343,9 +352,15 @@ def libraries_rel(library_id, book_id):
         if not library:
             return make_response(api_errors['404'], 404)
 
+        if library['owner'] != payload['sub']:
+            return make_response(api_errors['403'], 403)
+
         book = database._get_entity('Books', int(book_id))
         if not book:
             return make_response(api_errors['404'], 404)
+
+        if book['owner'] != payload['sub']:
+            return make_response(api_errors['403'], 403)
 
         # Change library and put
         book_list = library['books']
@@ -367,6 +382,9 @@ def libraries_rel(library_id, book_id):
             return make_response(api_errors['403'], 403)
 
         library = database._get_entity('Libraries', int(library_id))
+
+        if library['owner'] != payload['sub']:
+            return make_response(api_errors['403'], 403)
 
         # Clear individual books from the library
         book_list = library['books']
@@ -469,10 +487,13 @@ def books_id(book_id):
             return make_response(api_errors['400'], 400)
 
         if is_valid:
-            outcome = database.update_single('Books', int(book_id), data)
+            outcome = database.update_single('Books', int(book_id),
+                                             data, payload['sub'])
 
         if not outcome:
             return make_response(api_errors['404'], 404)
+        elif outcome == "403":
+            make_response(api_errors['403'], 403)
         else:
             return make_response(outcome, 200)
 
@@ -493,10 +514,13 @@ def books_id(book_id):
         if not is_valid:
             return make_response(api_errors['400'], 400)
         else:
-            outcome = database.update_single('Books', int(book_id), data)
+            outcome = database.update_single('Books', int(book_id),
+                                             data, payload['sub'])
 
         if not outcome:
             return make_response(api_errors['404'], 404)
+        elif outcome == "403":
+            make_response(api_errors['403'], 403)
         else:
             return make_response(outcome, 200)
 
@@ -519,10 +543,18 @@ def books_id(book_id):
         # Get book and get library_id
         book = database._get_entity('Books', int(book_id))
         if book:
-            library_id = int(book['library'])
+            if book['library']:
+                library_id = int(book['library'])
+            else:
+                library_id = False
+
+        if book:
+            if book['owner'] != payload['sub']:
+                return make_response(api_errors['403'], 403)
 
         # If library_id is found, check it for the book
         # entity
+
         if library_id:
             library = database._get_entity('Libraries', int(library_id))
 
@@ -537,10 +569,12 @@ def books_id(book_id):
             library['books'] = new_books
             database.client.put(library)
 
-        outcome = database.delete_single('Books', int(book_id))
+        outcome = database.delete_single('Books', int(book_id), payload['sub'])
 
         if not outcome:
             return make_response(api_errors['404'], 404)
+        elif outcome == "403":
+            make_response(api_errors['403'], 403)
         else:
             return make_response("No Content", 204)
 
