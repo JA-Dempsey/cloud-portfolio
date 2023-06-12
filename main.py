@@ -1,6 +1,5 @@
-from flask import Flask, request, make_response, redirect
-from flask import jsonify, render_template
-from flask import session, url_for
+from flask import Flask, request, make_response
+from flask import jsonify
 from DatastoreDatabase import DatastoreDatabase
 import requests
 
@@ -151,10 +150,11 @@ api_errors = {
     '415': {'Error': 'Unsupported Media Type'},
 }
 
-url = 'https://127.0.0.1'
+url = 'https://cs493-portfolio-f.ue.r.appspot.com'
 endpoints = {
     'Books': '/books',
-    'Libraries': '/libraries'
+    'Libraries': '/libraries',
+    'Users': '/users'
 }
 database = DatastoreDatabase(url, endpoints)
 
@@ -580,6 +580,17 @@ def books_id(book_id):
             return make_response("No Content", 204)
 
 
+@app.route('/users', methods=['GET'])
+def users():
+    if request.method == 'GET':
+
+        is_json = verify_app_json(request)
+        if not is_json:
+            return make_response(api_errors['406'], 406)
+
+        return make_response(database.get('Users', None, None), 200)
+
+
 # Functions used in endpoints
 def verify_attr(data, req_attr):
     for key in data.keys():
@@ -600,6 +611,18 @@ def verify_app_json(request):
 @app.route('/decode', methods=['GET'])
 def decode_jwt():
     payload = verify_jwt(request)
+
+    # Update user database entry
+    data = {"name": payload['name'],
+            "jwt_id": payload['sub']
+            }
+
+    filters = [("jwt_id", "=", payload['sub'])]
+    user = database.get('Users', None, filters)
+
+    if not user:
+        database.create_single('Users', data)
+
     return payload
 
 
