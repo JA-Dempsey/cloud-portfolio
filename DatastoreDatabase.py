@@ -72,7 +72,7 @@ class DatastoreDatabase():
                 entity[key] = data[key]
                 self.client.put(entity)
 
-            return True
+            return self._convert_single(entity)
         else:
             return None  # No entity found with given type, id
 
