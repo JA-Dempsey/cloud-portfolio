@@ -200,7 +200,7 @@ def libraries():
 
         if len(data) == len(req_attr) and is_valid:
             entity = database.create_single('Libraries', data)
-            return entity
+            return make_response(entity, 201)
 
     if request.method == 'GET':
         # User authorization is not required
@@ -410,7 +410,7 @@ def books():
 
         if len(data) == len(req_attr) and is_valid:
             entity = database.create_single('Books', data)
-            return entity
+            return make_response(entity, 201)
 
     if request.method == 'GET':
         # Not authorized, only public returned
