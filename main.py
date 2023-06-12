@@ -262,7 +262,7 @@ def libraries_id(library_id):
         if not outcome:
             return make_response(api_errors['404'], 404)
         else:
-            return make_response(outcome, 201)
+            return make_response(outcome, 200)
 
     if request.method == 'PATCH':
 
@@ -285,7 +285,7 @@ def libraries_id(library_id):
         if not outcome:
             return make_response(api_errors['404'], 404)
         else:
-            return make_response(outcome, 201)
+            return make_response(outcome, 200)
 
     if request.method == 'GET':
 
@@ -472,7 +472,7 @@ def books_id(book_id):
         if not outcome:
             return make_response(api_errors['404'], 404)
         else:
-            return make_response(outcome, 201)
+            return make_response(outcome, 200)
 
     if request.method == 'PATCH':
 
@@ -494,7 +494,7 @@ def books_id(book_id):
         if not outcome:
             return make_response(api_errors['404'], 404)
         else:
-            return make_response(outcome, 201)
+            return make_response(outcome, 200)
 
     if request.method == 'GET':
 
