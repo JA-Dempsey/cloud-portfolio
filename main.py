@@ -263,7 +263,7 @@ def libraries_id(library_id):
         if not outcome:
             return make_response(api_errors['404'], 404)
         elif outcome == "403":
-            make_response(api_errors['403'], 403)
+            return make_response(api_errors['403'], 403)
         else:
             return make_response(outcome, 200)
 
@@ -291,7 +291,7 @@ def libraries_id(library_id):
         if not outcome:
             return make_response(api_errors['404'], 404)
         elif outcome == "403":
-            make_response(api_errors['403'], 403)
+            return make_response(api_errors['403'], 403)
         else:
             return make_response(outcome, 200)
 
@@ -309,13 +309,16 @@ def libraries_id(library_id):
 
     if request.method == 'DELETE':
 
-        entity = database.get('Libraries', int(library_id))
+        library = database.get('Libraries', int(library_id))
 
-        # Clear books of the library
-        book_list = entity['books']
-        for book in book_list:
-            book['library'] = None
-            database.client.put(book)
+        # Clear books from the library before
+        # deleting the library
+        if library:
+            if library['books']:
+                book_list = library['books']
+                for book in book_list:
+                    book['library'] = None
+                    database.client.put(book)
 
         if not is_user:
             return make_response(api_errors['403'], 403)
@@ -327,7 +330,7 @@ def libraries_id(library_id):
         if not outcome:
             return make_response(api_errors['404'], 404)
         elif outcome == "403":
-            make_response(api_errors['403'], 403)
+            return make_response(api_errors['403'], 403)
         else:
             return make_response("No Content", 204)
 
@@ -493,7 +496,7 @@ def books_id(book_id):
         if not outcome:
             return make_response(api_errors['404'], 404)
         elif outcome == "403":
-            make_response(api_errors['403'], 403)
+            return make_response(api_errors['403'], 403)
         else:
             return make_response(outcome, 200)
 
@@ -520,7 +523,7 @@ def books_id(book_id):
         if not outcome:
             return make_response(api_errors['404'], 404)
         elif outcome == "403":
-            make_response(api_errors['403'], 403)
+            return make_response(api_errors['403'], 403)
         else:
             return make_response(outcome, 200)
 
@@ -542,11 +545,10 @@ def books_id(book_id):
 
         # Get book and get library_id
         book = database._get_entity('Books', int(book_id))
+        library_id = False
         if book:
             if book['library']:
                 library_id = int(book['library'])
-            else:
-                library_id = False
 
         if book:
             if book['owner'] != payload['sub']:
@@ -554,7 +556,6 @@ def books_id(book_id):
 
         # If library_id is found, check it for the book
         # entity
-
         if library_id:
             library = database._get_entity('Libraries', int(library_id))
 
