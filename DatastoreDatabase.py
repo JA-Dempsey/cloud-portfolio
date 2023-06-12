@@ -16,8 +16,9 @@ class DatastoreDatabase():
         if id:
             qkey = self.client.key(type, int(id))
             entity = self.client.get(qkey)
-            output = self._convert_single(entity)
-            self._add_self_link(type, output)
+            if entity:
+                output = self._convert_single(entity)
+                self._add_self_link(type, output)
             return output
 
         # Remainder of options use this query def
